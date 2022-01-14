@@ -284,7 +284,6 @@ func parseLights(cLight **C.struct_aiLight, count uint) []*Light {
 }
 
 func parseCameras(cCamera **C.struct_aiCamera, count uint) []*Camera {
-
 	if cCamera == nil {
 		return []*Camera{}
 	}
@@ -338,7 +337,6 @@ func parseTexels(cTexelsIn *C.struct_aiTexel, width, height uint) []byte {
 }
 
 func parseMeshes(cm **C.struct_aiMesh, count uint) []*Mesh {
-
 	if cm == nil {
 		return []*Mesh{}
 	}
@@ -408,7 +406,6 @@ func parseMeshes(cm **C.struct_aiMesh, count uint) []*Mesh {
 }
 
 func parseVec3(cv *C.struct_aiVector3D) vec3.T {
-
 	if cv == nil {
 		return vec3.T{}
 	}
@@ -421,7 +418,6 @@ func parseVec3(cv *C.struct_aiVector3D) vec3.T {
 }
 
 func parseAnimMeshes(cam **C.struct_aiAnimMesh, count uint) []*AnimMesh {
-
 	if cam == nil {
 		return []*AnimMesh{}
 	}
@@ -453,7 +449,6 @@ func parseAnimMeshes(cam **C.struct_aiAnimMesh, count uint) []*AnimMesh {
 }
 
 func parseTexCoords(ctc [MaxTexCoords]*C.struct_aiVector3D, vertCount uint) [MaxTexCoords][]vec3.T {
-
 	texCoords := [MaxTexCoords][]vec3.T{}
 
 	for j := 0; j < len(ctc); j++ {
@@ -469,8 +464,8 @@ func parseTexCoords(ctc [MaxTexCoords]*C.struct_aiVector3D, vertCount uint) [Max
 }
 
 func parseColorSet(cc [MaxColorSets]*C.struct_aiColor4D, vertCount uint) [MaxColorSets][]vec4.T {
-
 	colorSet := [MaxColorSets][]vec4.T{}
+
 	for j := 0; j < len(cc); j++ {
 
 		if cc[j] == nil {
@@ -484,7 +479,6 @@ func parseColorSet(cc [MaxColorSets]*C.struct_aiColor4D, vertCount uint) [MaxCol
 }
 
 func parseBones(cbs **C.struct_aiBone, count uint) []*Bone {
-
 	if cbs == nil {
 		return []*Bone{}
 	}
@@ -511,7 +505,6 @@ func parseBones(cbs **C.struct_aiBone, count uint) []*Bone {
 }
 
 func parseMat4(cm4 *C.struct_aiMatrix4x4) *mat4.T {
-
 	if cm4 == nil {
 		return &mat4.T{}
 	}
@@ -525,7 +518,6 @@ func parseMat4(cm4 *C.struct_aiMatrix4x4) *mat4.T {
 }
 
 func parseVertexWeights(cWeights *C.struct_aiVertexWeight, count uint) []VertexWeight {
-
 	if cWeights == nil {
 		return []VertexWeight{}
 	}
@@ -554,7 +546,6 @@ func parseAiString(aiString C.struct_aiString) string {
 }
 
 func parseUInts(cui *C.uint, count uint) []uint {
-
 	if cui == nil {
 		return []uint{}
 	}
@@ -575,7 +566,6 @@ func parseUInts(cui *C.uint, count uint) []uint {
 }
 
 func parseVec3s(cv *C.struct_aiVector3D, count uint) []vec3.T {
-
 	if cv == nil {
 		return []vec3.T{}
 	}
@@ -600,7 +590,6 @@ func parseVec3s(cv *C.struct_aiVector3D, count uint) []vec3.T {
 }
 
 func parseColors(cv *C.struct_aiColor4D, count uint) []vec4.T {
-
 	if cv == nil {
 		return []vec4.T{}
 	}
@@ -626,7 +615,6 @@ func parseColors(cv *C.struct_aiColor4D, count uint) []vec4.T {
 }
 
 func parseMaterials(cMatsIn **C.struct_aiMaterial, count uint) []*Material {
-
 	mats := make([]*Material, count)
 
 	var cMats []*C.struct_aiMaterial
@@ -648,7 +636,6 @@ func parseMaterials(cMatsIn **C.struct_aiMaterial, count uint) []*Material {
 }
 
 func parseMatProperties(cMatPropsIn **C.struct_aiMaterialProperty, count uint) []*MaterialProperty {
-
 	matProps := make([]*MaterialProperty, count)
 
 	var cMatProps []*C.struct_aiMaterialProperty
