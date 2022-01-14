@@ -32,9 +32,6 @@ type Node struct {
 	Metadata       map[string]Metadata
 }
 
-type Animation struct {
-}
-
 type EmbeddedTexture struct {
 	cTex         *C.struct_aiTexture
 	Width        uint
@@ -43,12 +40,6 @@ type EmbeddedTexture struct {
 	Data         []byte
 	IsCompressed bool
 	Filename     string
-}
-
-type Light struct {
-}
-
-type Camera struct {
 }
 
 type Metadata struct {
@@ -104,6 +95,10 @@ func parseScene(cs *C.struct_aiScene) *Scene {
 	s.Meshes = parseMeshes(cs.mMeshes, uint(cs.mNumMeshes))
 	s.Materials = parseMaterials(cs.mMaterials, uint(cs.mNumMaterials))
 	s.Textures = parseTextures(cs.mTextures, uint(s.cScene.mNumTextures))
+
+	s.Animations = parseAnimations(cs.mAnimations, uint(cs.mNumAnimations))
+	s.Lights = parseLights(cs.mLights, uint(s.cScene.mNumLights))
+	s.Cameras = parseCameras(cs.mCameras, uint(s.cScene.mNumCameras))
 
 	return s
 }
@@ -238,6 +233,78 @@ func parseTextures(cTexIn **C.struct_aiTexture, count uint) []*EmbeddedTexture {
 	}
 
 	return textures
+}
+
+func parseAnimations(cAnim **C.struct_aiAnimation, count uint) []*Animation {
+
+	if cAnim == nil {
+		return []*Animation{}
+	}
+
+	animations := make([]*Animation, count)
+
+	var cAmis []*C.struct_aiAnimation
+	cAmisHeader := (*reflect.SliceHeader)((unsafe.Pointer(&cAmis)))
+	cAmisHeader.Cap = int(count)
+	cAmisHeader.Len = int(count)
+	cAmisHeader.Data = uintptr(unsafe.Pointer(cAnim))
+
+	for i := 0; i < int(count); i++ {
+
+		animations[i] = &Animation{
+			a: cAmis[i],
+		}
+	}
+
+	return animations
+}
+
+func parseLights(cLight **C.struct_aiLight, count uint) []*Light {
+
+	if cLight == nil {
+		return []*Light{}
+	}
+
+	lights := make([]*Light, count)
+
+	var cLights []*C.struct_aiLight
+	cLightsHeader := (*reflect.SliceHeader)((unsafe.Pointer(&cLights)))
+	cLightsHeader.Cap = int(count)
+	cLightsHeader.Len = int(count)
+	cLightsHeader.Data = uintptr(unsafe.Pointer(cLight))
+
+	for i := 0; i < int(count); i++ {
+
+		lights[i] = &Light{
+			l: cLights[i],
+		}
+	}
+
+	return lights
+}
+
+func parseCameras(cCamera **C.struct_aiCamera, count uint) []*Camera {
+
+	if cCamera == nil {
+		return []*Camera{}
+	}
+
+	cams := make([]*Camera, count)
+
+	var cCameras []*C.struct_aiCamera
+	cLightsHeader := (*reflect.SliceHeader)((unsafe.Pointer(&cCameras)))
+	cLightsHeader.Cap = int(count)
+	cLightsHeader.Len = int(count)
+	cLightsHeader.Data = uintptr(unsafe.Pointer(cCamera))
+
+	for i := 0; i < int(count); i++ {
+
+		cams[i] = &Camera{
+			c: cCameras[i],
+		}
+	}
+
+	return cams
 }
 
 func parseTexels(cTexelsIn *C.struct_aiTexel, width, height uint) []byte {
