@@ -647,7 +647,7 @@ char *OpenDDLParser::parseBooleanLiteral(char *in, char *end, Value **boolean) {
 
     in = lookForNextToken(in, end);
     char *start(in);
-    size_t len(0);
+    size_t  __attribute__((unused))  len(0);
     while (!isSeparator(*in) && in != end) {
         ++in;
         ++len;

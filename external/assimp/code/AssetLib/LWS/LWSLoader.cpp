@@ -521,7 +521,7 @@ void LWSImporter::InternReadFile(const std::string &pFile, aiScene *pScene, IOSy
     std::list<LWS::NodeDesc> nodes;
 
     unsigned int cur_light = 0, cur_camera = 0, cur_object = 0;
-    unsigned int num_light = 0, num_camera = 0, num_object = 0;
+    unsigned int num_light = 0, num_camera = 0, num_object  __attribute__((unused))  = 0;
 
     // check magic identifier, 'LWSC'
     bool motion_file = false;

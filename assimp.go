@@ -1,7 +1,9 @@
 package assimp
 
 /*
-#cgo CFLAGS: -I ./lib
+#cgo linux CFLAGS: -I ./lib/linux
+#cgo darwin,amd64 CFLAGS: -I ./lib/darwin
+#cgo darwin,arm64 CFLAGS: -I ./lib/darwin_arm
 
 #include <stdlib.h>
 #include <assimp/scene.h>

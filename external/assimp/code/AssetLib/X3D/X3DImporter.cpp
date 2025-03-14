@@ -478,7 +478,7 @@ void X3DImporter::ParseHelper_Node_Exit() {
     if (mNodeElementCur != nullptr) {
         mNodeElementCur = mNodeElementCur->Parent;
     } else {
-        int i = 0;
+        int i  __attribute__((unused))  = 0;
         ++i;
     }
 }

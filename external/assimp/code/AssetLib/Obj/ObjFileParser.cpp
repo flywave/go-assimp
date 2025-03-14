@@ -111,7 +111,7 @@ ObjFile::Model *ObjFileParser::GetModel() const {
 void ObjFileParser::parseFile(IOStreamBuffer<char> &streamBuffer) {
     // only update every 100KB or it'll be too slow
     //const unsigned int updateProgressEveryBytes = 100 * 1024;
-    unsigned int progressCounter = 0;
+    unsigned int progressCounter  __attribute__((unused))  = 0;
     const unsigned int bytesToProcess = static_cast<unsigned int>(streamBuffer.size());
     const unsigned int progressTotal = bytesToProcess;
     unsigned int processed = 0;

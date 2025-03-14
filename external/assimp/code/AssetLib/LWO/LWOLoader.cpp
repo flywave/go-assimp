@@ -286,7 +286,7 @@ void LWOImporter::InternReadFile(const std::string &pFile,
             if (UINT_MAX == iDefaultSurface) {
                 pSorted.erase(pSorted.end() - 1);
             }
-            for (unsigned int p = 0, j = 0; j < mSurfaces->size(); ++j) {
+            for (unsigned int p  __attribute__((unused))  = 0, j = 0; j < mSurfaces->size(); ++j) {
                 SortedRep &sorted = pSorted[j];
                 if (sorted.empty())
                     continue;
