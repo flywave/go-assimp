@@ -17,7 +17,6 @@ unsigned int aiGetMaterialTextureCount(const struct aiMaterial* pMat, enum aiTex
 import "C"
 import (
 	"errors"
-	"reflect"
 	"unsafe"
 
 	"github.com/flywave/go3d/mat4"
@@ -115,23 +114,19 @@ func parseRootNode(cNodesIn *C.struct_aiNode) *Node {
 		Metadata:       parseMetadata(cNodesIn.mMetaData),
 	}
 
-	rn.Children = parseNodes(cNodesIn.mChildren, rn, uint(cNodesIn.mNumChildren))
+	rn.Children = parseNodes(cNodesIn.mChildren, rn, int(cNodesIn.mNumChildren))
 	return rn
 }
 
-func parseNodes(cNodesIn **C.struct_aiNode, parent *Node, parentChildrenCount uint) []*Node {
+func parseNodes(cNodesIn **C.struct_aiNode, parent *Node, parentChildrenCount int) []*Node {
 
-	if cNodesIn == nil {
+	if cNodesIn == nil || parentChildrenCount <= 0 {
 		return []*Node{}
 	}
 
 	nodes := make([]*Node, parentChildrenCount)
 
-	var cNodes []*C.struct_aiNode
-	cNodesHeader := (*reflect.SliceHeader)((unsafe.Pointer(&cNodes)))
-	cNodesHeader.Cap = int(parentChildrenCount)
-	cNodesHeader.Len = int(parentChildrenCount)
-	cNodesHeader.Data = uintptr(unsafe.Pointer(cNodesIn))
+	cNodes := unsafe.Slice((*C.struct_aiNode)(unsafe.Pointer(cNodesIn)), parentChildrenCount)
 
 	for i := 0; i < len(nodes); i++ {
 
@@ -159,20 +154,10 @@ func parseMetadata(cMetaIn *C.struct_aiMetadata) map[string]Metadata {
 
 	meta := make(map[string]Metadata, cMetaIn.mNumProperties)
 
-	var cKeys []C.struct_aiString
-	cKeysHeader := (*reflect.SliceHeader)((unsafe.Pointer(&cKeys)))
-	cKeysHeader.Cap = int(cMetaIn.mNumProperties)
-	cKeysHeader.Len = int(cMetaIn.mNumProperties)
-	cKeysHeader.Data = uintptr(unsafe.Pointer(cMetaIn.mKeys))
-
-	var cVals []C.struct_aiMetadataEntry
-	cValsHeader := (*reflect.SliceHeader)((unsafe.Pointer(&cVals)))
-	cValsHeader.Cap = int(cMetaIn.mNumProperties)
-	cValsHeader.Len = int(cMetaIn.mNumProperties)
-	cValsHeader.Data = uintptr(unsafe.Pointer(cMetaIn.mValues))
+	cKeys := unsafe.Slice((*C.struct_aiString)(unsafe.Pointer(cMetaIn.mKeys)), int(cMetaIn.mNumProperties))
+	cVals := unsafe.Slice((*C.struct_aiMetadataEntry)(unsafe.Pointer(cMetaIn.mValues)), int(cMetaIn.mNumProperties))
 
 	for i := 0; i < int(cMetaIn.mNumProperties); i++ {
-
 		meta[parseAiString(cKeys[i])] = parseMetadataEntry(cVals[i])
 	}
 
@@ -215,16 +200,12 @@ func parseTextures(cTexIn **C.struct_aiTexture, count uint) []*EmbeddedTexture {
 
 	textures := make([]*EmbeddedTexture, count)
 
-	var cTex []*C.struct_aiTexture
-	cTexHeader := (*reflect.SliceHeader)((unsafe.Pointer(&cTex)))
-	cTexHeader.Cap = int(count)
-	cTexHeader.Len = int(count)
-	cTexHeader.Data = uintptr(unsafe.Pointer(cTexIn))
+	cTex := unsafe.Slice((*C.struct_aiTexture)(unsafe.Pointer(cTexIn)), int(count))
 
 	for i := 0; i < int(count); i++ {
 
 		textures[i] = &EmbeddedTexture{
-			cTex:         cTex[i],
+			cTex:         &cTex[i],
 			Width:        uint(cTex[i].mWidth),
 			Height:       uint(cTex[i].mHeight),
 			FormatHint:   C.GoString(&cTex[i].achFormatHint[0]),
@@ -245,16 +226,12 @@ func parseAnimations(cAnim **C.struct_aiAnimation, count uint) []*Animation {
 
 	animations := make([]*Animation, count)
 
-	var cAmis []*C.struct_aiAnimation
-	cAmisHeader := (*reflect.SliceHeader)((unsafe.Pointer(&cAmis)))
-	cAmisHeader.Cap = int(count)
-	cAmisHeader.Len = int(count)
-	cAmisHeader.Data = uintptr(unsafe.Pointer(cAnim))
+	cAmis := unsafe.Slice((*C.struct_aiAnimation)(unsafe.Pointer(cAnim)), int(count))
 
 	for i := 0; i < int(count); i++ {
 
 		animations[i] = &Animation{
-			a: cAmis[i],
+			a: &cAmis[i],
 		}
 	}
 
@@ -269,16 +246,12 @@ func parseLights(cLight **C.struct_aiLight, count uint) []*Light {
 
 	lights := make([]*Light, count)
 
-	var cLights []*C.struct_aiLight
-	cLightsHeader := (*reflect.SliceHeader)((unsafe.Pointer(&cLights)))
-	cLightsHeader.Cap = int(count)
-	cLightsHeader.Len = int(count)
-	cLightsHeader.Data = uintptr(unsafe.Pointer(cLight))
+	cLights := unsafe.Slice((*C.struct_aiLight)(unsafe.Pointer(cLight)), int(count))
 
 	for i := 0; i < int(count); i++ {
 
 		lights[i] = &Light{
-			l: cLights[i],
+			l: &cLights[i],
 		}
 	}
 
@@ -292,16 +265,12 @@ func parseCameras(cCamera **C.struct_aiCamera, count uint) []*Camera {
 
 	cams := make([]*Camera, count)
 
-	var cCameras []*C.struct_aiCamera
-	cLightsHeader := (*reflect.SliceHeader)((unsafe.Pointer(&cCameras)))
-	cLightsHeader.Cap = int(count)
-	cLightsHeader.Len = int(count)
-	cLightsHeader.Data = uintptr(unsafe.Pointer(cCamera))
+	cCameras := unsafe.Slice((*C.struct_aiCamera)(unsafe.Pointer(cCamera)), int(count))
 
 	for i := 0; i < int(count); i++ {
 
 		cams[i] = &Camera{
-			c: cCameras[i],
+			c: &cCameras[i],
 		}
 	}
 
@@ -320,11 +289,7 @@ func parseTexels(cTexelsIn *C.struct_aiTexel, width, height uint) []byte {
 
 	data := make([]byte, texelCount*4)
 
-	var cTexels []*C.struct_aiTexel
-	cTexelsHeader := (*reflect.SliceHeader)((unsafe.Pointer(&cTexels)))
-	cTexelsHeader.Cap = int(texelCount)
-	cTexelsHeader.Len = int(texelCount)
-	cTexelsHeader.Data = uintptr(unsafe.Pointer(cTexelsIn))
+	cTexels := unsafe.Slice((*C.struct_aiTexel)(unsafe.Pointer(cTexelsIn)), int(texelCount))
 
 	for i := 0; i < int(texelCount); i++ {
 
@@ -345,11 +310,7 @@ func parseMeshes(cm **C.struct_aiMesh, count uint) []*Mesh {
 
 	meshes := make([]*Mesh, count)
 
-	var cmeshes []*C.struct_aiMesh
-	cmeshesHeader := (*reflect.SliceHeader)((unsafe.Pointer(&cmeshes)))
-	cmeshesHeader.Cap = int(count)
-	cmeshesHeader.Len = int(count)
-	cmeshesHeader.Data = uintptr(unsafe.Pointer(cm))
+	cmeshes := unsafe.Slice((*C.struct_aiMesh)(unsafe.Pointer(cm)), int(count))
 
 	for i := 0; i < int(count); i++ {
 
@@ -376,11 +337,7 @@ func parseMeshes(cm **C.struct_aiMesh, count uint) []*Mesh {
 			m.TexCoordChannelCount[j] = uint(cmeshes[j].mNumUVComponents[j])
 		}
 
-		var cFaces []*C.struct_aiFace
-		cFacesHeader := (*reflect.SliceHeader)((unsafe.Pointer(&cFaces)))
-		cFacesHeader.Cap = int(cmesh.mNumFaces)
-		cFacesHeader.Len = int(cmesh.mNumFaces)
-		cFacesHeader.Data = uintptr(unsafe.Pointer(cmesh.mFaces))
+		cFaces := unsafe.Slice((*C.struct_aiFace)(unsafe.Pointer(cmesh.mFaces)), int(cmesh.mNumFaces))
 
 		m.Faces = make([]Face, cmesh.mNumFaces)
 		for j := 0; j < len(m.Faces); j++ {
@@ -426,11 +383,7 @@ func parseAnimMeshes(cam **C.struct_aiAnimMesh, count uint) []*AnimMesh {
 
 	animMeshes := make([]*AnimMesh, count)
 
-	var cAnimMeshes []*C.struct_aiAnimMesh
-	cAnimMeshesHeader := (*reflect.SliceHeader)((unsafe.Pointer(&cAnimMeshes)))
-	cAnimMeshesHeader.Cap = int(count)
-	cAnimMeshesHeader.Len = int(count)
-	cAnimMeshesHeader.Data = uintptr(unsafe.Pointer(cam))
+	cAnimMeshes := unsafe.Slice((*C.struct_aiAnimMesh)(unsafe.Pointer(cam)), int(count))
 
 	for i := 0; i < int(count); i++ {
 
@@ -487,11 +440,7 @@ func parseBones(cbs **C.struct_aiBone, count uint) []*Bone {
 
 	bones := make([]*Bone, count)
 
-	var cbones []*C.struct_aiBone
-	cbonesHeader := (*reflect.SliceHeader)((unsafe.Pointer(&cbones)))
-	cbonesHeader.Cap = int(count)
-	cbonesHeader.Len = int(count)
-	cbonesHeader.Data = uintptr(unsafe.Pointer(cbs))
+	cbones := unsafe.Slice((*C.struct_aiBone)(unsafe.Pointer(cbs)), int(count))
 
 	for i := 0; i < int(count); i++ {
 
@@ -526,11 +475,7 @@ func parseVertexWeights(cWeights *C.struct_aiVertexWeight, count uint) []VertexW
 
 	vw := make([]VertexWeight, count)
 
-	var cvw []*C.struct_aiVertexWeight
-	cvwHeader := (*reflect.SliceHeader)((unsafe.Pointer(&cvw)))
-	cvwHeader.Cap = int(count)
-	cvwHeader.Len = int(count)
-	cvwHeader.Data = uintptr(unsafe.Pointer(cWeights))
+	cvw := unsafe.Slice((*C.struct_aiVertexWeight)(unsafe.Pointer(cWeights)), int(count))
 
 	for i := 0; i < int(count); i++ {
 
@@ -554,11 +499,7 @@ func parseUInts(cui *C.uint, count uint) []uint {
 
 	uints := make([]uint, count)
 
-	var cUInts []C.uint
-	cUIntsHeader := (*reflect.SliceHeader)((unsafe.Pointer(&cUInts)))
-	cUIntsHeader.Cap = int(count)
-	cUIntsHeader.Len = int(count)
-	cUIntsHeader.Data = uintptr(unsafe.Pointer(cui))
+	cUInts := unsafe.Slice((*C.uint)(unsafe.Pointer(cui)), int(count))
 
 	for i := 0; i < len(cUInts); i++ {
 		uints[i] = uint(cUInts[i])
@@ -572,11 +513,7 @@ func parseVec3s(cv *C.struct_aiVector3D, count uint) []vec3.T {
 		return []vec3.T{}
 	}
 
-	var carr []*C.struct_aiVector3D
-	carrHeader := (*reflect.SliceHeader)((unsafe.Pointer(&carr)))
-	carrHeader.Cap = int(count)
-	carrHeader.Len = int(count)
-	carrHeader.Data = uintptr(unsafe.Pointer(cv))
+	carr := unsafe.Slice((*C.struct_aiVector3D)(unsafe.Pointer(cv)), int(count))
 
 	verts := make([]vec3.T, count)
 
@@ -596,11 +533,7 @@ func parseColors(cv *C.struct_aiColor4D, count uint) []vec4.T {
 		return []vec4.T{}
 	}
 
-	var carr []*C.struct_aiColor4D
-	carrHeader := (*reflect.SliceHeader)((unsafe.Pointer(&carr)))
-	carrHeader.Cap = int(count)
-	carrHeader.Len = int(count)
-	carrHeader.Data = uintptr(unsafe.Pointer(cv))
+	carr := unsafe.Slice((*C.struct_aiColor4D)(unsafe.Pointer(cv)), int(count))
 
 	verts := make([]vec4.T, count)
 
@@ -619,16 +552,12 @@ func parseColors(cv *C.struct_aiColor4D, count uint) []vec4.T {
 func parseMaterials(cMatsIn **C.struct_aiMaterial, count uint) []*Material {
 	mats := make([]*Material, count)
 
-	var cMats []*C.struct_aiMaterial
-	cMatsHeader := (*reflect.SliceHeader)((unsafe.Pointer(&cMats)))
-	cMatsHeader.Cap = int(count)
-	cMatsHeader.Len = int(count)
-	cMatsHeader.Data = uintptr(unsafe.Pointer(cMatsIn))
+	cMats := unsafe.Slice((*C.struct_aiMaterial)(unsafe.Pointer(cMatsIn)), int(count))
 
 	for i := 0; i < int(count); i++ {
 
 		mats[i] = &Material{
-			cMat:             cMats[i],
+			cMat:             &cMats[i],
 			Properties:       parseMatProperties(cMats[i].mProperties, uint(cMats[i].mNumProperties)),
 			AllocatedStorage: uint(cMats[i].mNumAllocated),
 		}
@@ -640,11 +569,7 @@ func parseMaterials(cMatsIn **C.struct_aiMaterial, count uint) []*Material {
 func parseMatProperties(cMatPropsIn **C.struct_aiMaterialProperty, count uint) []*MaterialProperty {
 	matProps := make([]*MaterialProperty, count)
 
-	var cMatProps []*C.struct_aiMaterialProperty
-	cMatPropsHeader := (*reflect.SliceHeader)((unsafe.Pointer(&cMatProps)))
-	cMatPropsHeader.Cap = int(count)
-	cMatPropsHeader.Len = int(count)
-	cMatPropsHeader.Data = uintptr(unsafe.Pointer(cMatPropsIn))
+	cMatProps := unsafe.Slice((*C.struct_aiMaterialProperty)(unsafe.Pointer(cMatPropsIn)), int(count))
 
 	for i := 0; i < int(count); i++ {
 

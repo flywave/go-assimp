@@ -8,7 +8,6 @@ package assimp
 */
 import "C"
 import (
-	"reflect"
 	"unsafe"
 
 	"github.com/flywave/go3d/quaternion"
@@ -17,32 +16,32 @@ import (
 
 type VectorKey C.struct_aiVectorKey
 
-func (this VectorKey) Time() float64 {
-	return float64(this.mTime)
+func (v VectorKey) Time() float64 {
+	return float64(v.mTime)
 }
 
-func (this VectorKey) Value() vec3.T {
-	return vec3.T{float32(this.mValue.x), float32(this.mValue.y), float32(this.mValue.z)}
+func (v VectorKey) Value() vec3.T {
+	return vec3.T{float32(v.mValue.x), float32(v.mValue.y), float32(v.mValue.z)}
 }
 
 type QuatKey C.struct_aiQuatKey
 
-func (this QuatKey) Time() float64 {
-	return float64(this.mTime)
+func (v QuatKey) Time() float64 {
+	return float64(v.mTime)
 }
 
-func (this QuatKey) Value() quaternion.T {
-	return quaternion.T{float32(this.mValue.x), float32(this.mValue.y), float32(this.mValue.z), float32(this.mValue.w)}
+func (v QuatKey) Value() quaternion.T {
+	return quaternion.T{float32(v.mValue.x), float32(v.mValue.y), float32(v.mValue.z), float32(v.mValue.w)}
 }
 
 type MeshKey C.struct_aiMeshKey
 
-func (this MeshKey) Time() float64 {
-	return float64(this.mTime)
+func (v MeshKey) Time() float64 {
+	return float64(v.mTime)
 }
 
-func (this MeshKey) Value() int {
-	return int(this.mValue)
+func (v MeshKey) Value() int {
+	return int(v.mValue)
 }
 
 type AnimBehaviour C.enum_aiAnimBehaviour
@@ -56,87 +55,67 @@ const (
 
 type NodeAnim C.struct_aiNodeAnim
 
-func (this *NodeAnim) Name() string {
-	return C.GoString(&this.mNodeName.data[0])
+func (v *NodeAnim) Name() string {
+	return C.GoString(&v.mNodeName.data[0])
 }
 
-func (this *NodeAnim) NumPositionKeys() int {
-	return int(this.mNumPositionKeys)
+func (v *NodeAnim) NumPositionKeys() int {
+	return int(v.mNumPositionKeys)
 }
 
-func (this *NodeAnim) PositionKeys() []VectorKey {
-	if this.mNumPositionKeys > 0 && this.mPositionKeys != nil {
-		var result []VectorKey
-		header := (*reflect.SliceHeader)(unsafe.Pointer(&result))
-		header.Cap = int(this.mNumPositionKeys)
-		header.Len = int(this.mNumPositionKeys)
-		header.Data = uintptr(unsafe.Pointer(this.mPositionKeys))
-		return result
+func (v *NodeAnim) PositionKeys() []VectorKey {
+	if v.mNumPositionKeys > 0 && v.mPositionKeys != nil {
+		return unsafe.Slice((*VectorKey)(unsafe.Pointer(v.mPositionKeys)), int(v.mNumPositionKeys))
 	} else {
 		return nil
 	}
 }
 
-func (this *NodeAnim) NumRotationKeys() int {
-	return int(this.mNumRotationKeys)
+func (v *NodeAnim) NumRotationKeys() int {
+	return int(v.mNumRotationKeys)
 }
 
-func (this *NodeAnim) RotationKeys() []QuatKey {
-	if this.mNumRotationKeys > 0 && this.mRotationKeys != nil {
-		var result []QuatKey
-		header := (*reflect.SliceHeader)(unsafe.Pointer(&result))
-		header.Cap = int(this.mNumRotationKeys)
-		header.Len = int(this.mNumRotationKeys)
-		header.Data = uintptr(unsafe.Pointer(this.mRotationKeys))
-		return result
+func (v *NodeAnim) RotationKeys() []QuatKey {
+	if v.mNumRotationKeys > 0 && v.mRotationKeys != nil {
+		return unsafe.Slice((*QuatKey)(unsafe.Pointer(v.mRotationKeys)), int(v.mNumRotationKeys))
 	} else {
 		return nil
 	}
 }
 
-func (this *NodeAnim) NumScalingKeys() int {
-	return int(this.mNumScalingKeys)
+func (v *NodeAnim) NumScalingKeys() int {
+	return int(v.mNumScalingKeys)
 }
 
-func (this *NodeAnim) ScalingKeys() []VectorKey {
-	if this.mNumScalingKeys > 0 && this.mScalingKeys != nil {
-		var result []VectorKey
-		header := (*reflect.SliceHeader)(unsafe.Pointer(&result))
-		header.Cap = int(this.mNumScalingKeys)
-		header.Len = int(this.mNumScalingKeys)
-		header.Data = uintptr(unsafe.Pointer(this.mScalingKeys))
-		return result
+func (v *NodeAnim) ScalingKeys() []VectorKey {
+	if v.mNumScalingKeys > 0 && v.mScalingKeys != nil {
+		return unsafe.Slice((*VectorKey)(unsafe.Pointer(v.mScalingKeys)), int(v.mNumScalingKeys))
 	} else {
 		return nil
 	}
 }
 
-func (this *NodeAnim) PreState() AnimBehaviour {
-	return AnimBehaviour(this.mPreState)
+func (v *NodeAnim) PreState() AnimBehaviour {
+	return AnimBehaviour(v.mPreState)
 }
 
-func (this *NodeAnim) PostState() AnimBehaviour {
-	return AnimBehaviour(this.mPostState)
+func (v *NodeAnim) PostState() AnimBehaviour {
+	return AnimBehaviour(v.mPostState)
 }
 
 type MeshAnim C.struct_aiMeshAnim
 
-func (this *MeshAnim) Name() string {
-	return C.GoString(&this.mName.data[0])
+func (v *MeshAnim) Name() string {
+	return C.GoString(&v.mName.data[0])
 }
 
-func (this *MeshAnim) NumKeys() int {
-	return int(this.mNumKeys)
+func (v *MeshAnim) NumKeys() int {
+	return int(v.mNumKeys)
 }
 
-func (this *MeshAnim) Keys() []MeshKey {
-	if this.mNumKeys > 0 && this.mKeys != nil {
-		var result []MeshKey
-		header := (*reflect.SliceHeader)(unsafe.Pointer(&result))
-		header.Cap = int(this.mNumKeys)
-		header.Len = int(this.mNumKeys)
-		header.Data = uintptr(unsafe.Pointer(this.mKeys))
-		return result
+func (v *MeshAnim) Keys() []MeshKey {
+	if v.mNumKeys > 0 && v.mKeys != nil {
+		return unsafe.Slice((*MeshKey)(unsafe.Pointer(v.mKeys)), int(v.mNumKeys))
 	} else {
 		return nil
 	}
@@ -146,46 +125,46 @@ type Animation struct {
 	a *C.struct_aiAnimation
 }
 
-func (this *Animation) Name() string {
-	return C.GoString(&this.a.mName.data[0])
+func (v *Animation) Name() string {
+	return C.GoString(&v.a.mName.data[0])
 }
 
-func (this *Animation) Duration() float64 {
-	return float64(this.a.mDuration)
+func (v *Animation) Duration() float64 {
+	return float64(v.a.mDuration)
 }
 
-func (this *Animation) TicksPerSecond() float64 {
-	return float64(this.a.mTicksPerSecond)
+func (v *Animation) TicksPerSecond() float64 {
+	return float64(v.a.mTicksPerSecond)
 }
 
-func (this *Animation) NumChannels() int {
-	return int(this.a.mNumChannels)
+func (v *Animation) NumChannels() int {
+	return int(v.a.mNumChannels)
 }
 
-func (this *Animation) Channels() []*NodeAnim {
-	if this.a.mNumChannels > 0 && this.a.mChannels != nil {
-		var result []*NodeAnim
-		header := (*reflect.SliceHeader)(unsafe.Pointer(&result))
-		header.Cap = int(this.a.mNumChannels)
-		header.Len = int(this.a.mNumChannels)
-		header.Data = uintptr(unsafe.Pointer(this.a.mChannels))
+func (v *Animation) Channels() []*NodeAnim {
+	if v.a.mNumChannels > 0 && v.a.mChannels != nil {
+		channels := unsafe.Slice(v.a.mChannels, int(v.a.mNumChannels))
+		result := make([]*NodeAnim, len(channels))
+		for i := range channels {
+			result[i] = (*NodeAnim)(unsafe.Pointer(&channels[i]))
+		}
 		return result
 	} else {
 		return nil
 	}
 }
 
-func (this *Animation) NumMeshChannels() int {
-	return int(this.a.mNumMeshChannels)
+func (v *Animation) NumMeshChannels() int {
+	return int(v.a.mNumMeshChannels)
 }
 
-func (this *Animation) MeshChannels() []*MeshAnim {
-	if this.a.mNumMeshChannels > 0 && this.a.mMeshChannels != nil {
-		var result []*MeshAnim
-		header := (*reflect.SliceHeader)(unsafe.Pointer(&result))
-		header.Cap = int(this.a.mNumMeshChannels)
-		header.Len = int(this.a.mNumMeshChannels)
-		header.Data = uintptr(unsafe.Pointer(this.a.mMeshChannels))
+func (v *Animation) MeshChannels() []*MeshAnim {
+	if v.a.mNumMeshChannels > 0 && v.a.mMeshChannels != nil {
+		channels := unsafe.Slice(v.a.mMeshChannels, int(v.a.mNumMeshChannels))
+		result := make([]*MeshAnim, len(channels))
+		for i := range channels {
+			result[i] = (*MeshAnim)(unsafe.Pointer(&channels[i]))
+		}
 		return result
 	} else {
 		return nil
