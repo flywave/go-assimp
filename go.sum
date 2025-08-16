@@ -1,3 +1,5 @@
+github.com/chai2010/tiff v0.0.0-20211005095045-4ec2aa243943 h1:CjuhVIUiyWQZVY4rmcvm/9R+60e/Wi6LkXyHU38MqXI=
+github.com/chai2010/tiff v0.0.0-20211005095045-4ec2aa243943/go.mod h1:FhMMqekobM33oGdTfbi65oQ9P7bnQ5/0EDfmleW35RE=
 github.com/flywave/gltf v0.20.4-0.20250411080706-f58af20d5f38 h1:z8hRCF+2LIpkW35brQPFyi7LS8FKz14UCXspsV6ujS0=
 github.com/flywave/gltf v0.20.4-0.20250411080706-f58af20d5f38/go.mod h1:h3xfqxMbijh9QHULN7kIIGyPmmZi04oWdws7sPwLTs4=
 github.com/flywave/go-mst v0.0.0-20250814104510-37f0a6660bc0 h1:35/80kHlwu7nlbVihYClK4AsLonrfufgKmbjlcb07e8=

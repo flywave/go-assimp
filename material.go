@@ -68,3 +68,72 @@ func GetMaterialTexture(m *Material, texType TextureType, texIndex uint) (*GetMa
 
 	return nil, errors.New("get texture failed: unknown error with code " + fmt.Sprintf("%v", status))
 }
+
+// Helper to convert ASSIMP property names to better format
+func NicePropName(prop string) string {
+	switch prop {
+	case "?mat.name":
+		return "NAME"
+	case "$mat.twosided":
+		return "TWOSIDED"
+	case "$mat.shadingm":
+		return "SHADING_MODEL"
+	case "$mat.wireframe":
+		return "ENABLE_WIREFRAME"
+	case "$mat.blend":
+		return "BLEND_FUNC"
+	case "$mat.opacity":
+		return "OPACITY"
+	case "$mat.bumpscaling":
+		return "BUMPSCALING"
+	case "$mat.shininess":
+		return "SHININESS"
+	case "$mat.reflectivity":
+		return "REFLECTIVITY"
+	case "$mat.shinpercent":
+		return "SHININESS_STRENGTH"
+	case "$mat.refracti":
+		return "REFRACTI"
+	case "$clr.diffuse":
+		return "COLOR_DIFFUSE"
+	case "$clr.ambient":
+		return "COLOR_AMBIENT"
+	case "$clr.specular":
+		return "COLOR_SPECULAR"
+	case "$clr.emissive":
+		return "COLOR_EMISSIVE"
+	case "$clr.transparent":
+		return "COLOR_TRANSPARENT"
+	case "$clr.reflective":
+		return "COLOR_REFLECTIVE"
+	case "?bg.global":
+		return "GLOBAL_BACKGROUND_IMAGE"
+	case "$tex.file":
+		return "TEXTURE_BASE"
+	case "$tex.mapping":
+		return "MAPPING_BASE"
+	case "$tex.flags":
+		return "TEXFLAGS_BASE"
+	case "$tex.uvwsrc":
+		return "UVWSRC_BASE"
+	case "$tex.mapmodev":
+		return "MAPPINGMODE_V_BASE"
+	case "$tex.mapaxis":
+		return "TEXMAP_AXIS_BASE"
+	case "$tex.blend":
+		return "TEXBLEND_BASE"
+	case "$tex.uvtrafo":
+		return "UVTRANSFORM_BASE"
+	case "$tex.op":
+		return "TEXOP_BASE"
+	case "$tex.mapmodeu":
+		return "MAPPINGMODE_U_BASE"
+	default:
+		return "NONE"
+	}
+}
+
+// GetNiceName returns the property name in a more readable format
+func (mp *MaterialProperty) GetNiceName() string {
+	return NicePropName(mp.name)
+}

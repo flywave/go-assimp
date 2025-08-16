@@ -1,13 +1,27 @@
 package assimp
 
 import (
+	"errors"
+	"hash/fnv"
+	"image"
+	"image/color"
+	"image/gif"
+	"image/jpeg"
+	"image/png"
+	"io"
 	"math"
+	"os"
+	"path/filepath"
+	"strings"
 
-	"github.com/flywave/go-mst"
 	mat4d "github.com/flywave/go3d/float64/mat4"
+
+	"github.com/chai2010/tiff"
+	"github.com/flywave/go-mst"
 	"github.com/flywave/go3d/mat4"
 	"github.com/flywave/go3d/vec2"
 	"github.com/flywave/go3d/vec3"
+	"golang.org/x/image/bmp"
 )
 
 // AssimpToMSTConverter 将assimp场景转换为mst网格
@@ -67,37 +81,38 @@ func convertMaterial(material *Material) mst.MeshMaterial {
 
 	// 提取材质属性
 	for _, prop := range material.Properties {
-		switch prop.name {
-		case "$clr.diffuse":
+		niceName := prop.GetNiceName()
+		switch niceName {
+		case "COLOR_DIFFUSE":
 			if len(prop.Data) >= 3 {
 				color = [3]byte{prop.Data[0], prop.Data[1], prop.Data[2]}
 				diffuse = color
 			}
-		case "$clr.specular":
+		case "COLOR_SPECULAR":
 			if len(prop.Data) >= 3 {
 				specular = [3]byte{prop.Data[0], prop.Data[1], prop.Data[2]}
 			}
-		case "$clr.ambient":
+		case "COLOR_AMBIENT":
 			if len(prop.Data) >= 3 {
 				ambient = [3]byte{prop.Data[0], prop.Data[1], prop.Data[2]}
 			}
-		case "$clr.emissive":
+		case "COLOR_EMISSIVE":
 			if len(prop.Data) >= 3 {
 				emissive = [3]byte{prop.Data[0], prop.Data[1], prop.Data[2]}
 			}
-		case "$mat.opacity":
+		case "OPACITY":
 			if len(prop.Data) >= 4 {
 				transparency = math.Float32frombits(binaryToUint32(prop.Data))
 			}
-		case "$mat.shininess":
+		case "SHININESS":
 			if len(prop.Data) >= 4 {
 				shininess = math.Float32frombits(binaryToUint32(prop.Data))
 			}
-		case "$mat.metallic":
+		case "METALLIC":
 			if len(prop.Data) >= 4 {
 				metallic = math.Float32frombits(binaryToUint32(prop.Data))
 			}
-		case "$mat.roughness":
+		case "ROUGHNESS":
 			if len(prop.Data) >= 4 {
 				roughness = math.Float32frombits(binaryToUint32(prop.Data))
 			}
@@ -160,28 +175,10 @@ func convertMaterial(material *Material) mst.MeshMaterial {
 	}
 }
 
-// getTextureFromMaterial 从assimp材质中提取纹理
-func getTextureFromMaterial(material *Material, textureType TextureType) *mst.Texture {
-	for _, prop := range material.Properties {
-		if prop.Semantic == textureType && prop.name == "$tex.file" {
-			// 这里应该加载实际的纹理数据，暂时返回一个占位符
-			return &mst.Texture{
-				Id:     int32(len(material.Properties)),
-				Name:   string(prop.Data),
-				Size:   [2]uint64{512, 512},
-				Format: mst.TEXTURE_FORMAT_RGB,
-				Type:   mst.TEXTURE_PIXEL_TYPE_UBYTE,
-				Data:   make([]byte, 512*512*3),
-			}
-		}
-	}
-	return nil
-}
-
 // hasPBRProperties 检查材质是否有PBR属性
 func hasPBRProperties(material *Material) bool {
 	for _, prop := range material.Properties {
-		if prop.name == "$mat.metallic" || prop.name == "$mat.roughness" {
+		if prop.GetNiceName() == "METALLIC" || prop.GetNiceName() == "ROUGHNESS" {
 			return true
 		}
 	}
@@ -191,11 +188,158 @@ func hasPBRProperties(material *Material) bool {
 // hasSpecularProperties 检查材质是否有镜面反射属性
 func hasSpecularProperties(material *Material) bool {
 	for _, prop := range material.Properties {
-		if prop.name == "$clr.specular" {
+		if prop.GetNiceName() == "COLOR_SPECULAR" {
 			return true
 		}
 	}
 	return false
+}
+
+// getTextureFromMaterial 从assimp材质中提取纹理并加载实际纹理数据
+func getTextureFromMaterial(material *Material, textureType TextureType) *mst.Texture {
+	for _, prop := range material.Properties {
+		if prop.Semantic == textureType && prop.GetNiceName() == "TEXTURE_BASE" {
+			if len(prop.Data) == 0 {
+				continue
+			}
+
+			texturePath := string(prop.Data)
+			if texturePath == "" {
+				continue
+			}
+
+			// 清理纹理路径
+			texturePath = strings.TrimSpace(texturePath)
+			texturePath = strings.Trim(texturePath, "\x00")
+
+			// 检查文件是否存在
+			if _, err := os.Stat(texturePath); os.IsNotExist(err) {
+				// 尝试相对路径
+				filename := filepath.Base(texturePath)
+
+				// 尝试不同路径组合
+				possiblePaths := []string{
+					filename,
+					filepath.Join(".", filename),
+					filepath.Join("..", filename),
+					filepath.Join("textures", filename),
+					filepath.Join("Textures", filename),
+					filepath.Join("..", "textures", filename),
+					filepath.Join("..", "Textures", filename),
+				}
+
+				found := false
+				for _, tryPath := range possiblePaths {
+					if _, err := os.Stat(tryPath); err == nil {
+						texturePath = tryPath
+						found = true
+						break
+					}
+				}
+
+				if !found {
+					continue
+				}
+			}
+
+			// 使用convertTex逻辑加载纹理
+			return loadTextureFromPath(texturePath)
+		}
+	}
+	return nil
+}
+
+// loadTextureFromPath 从文件路径加载纹理数据
+func loadTextureFromPath(path string) *mst.Texture {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil
+	}
+	defer f.Close()
+
+	// 获取文件类型
+	_, ft, err := image.DecodeConfig(f)
+	if err != nil {
+		f.Seek(0, 0)
+		// 根据文件扩展名判断类型
+		ext := strings.ToLower(filepath.Ext(path))
+		switch ext {
+		case ".jpg", ".jpeg":
+			ft = "jpeg"
+		case ".png":
+			ft = "png"
+		case ".gif":
+			ft = "gif"
+		case ".bmp":
+			ft = "bmp"
+		case ".tiff", ".tif":
+			ft = "tiff"
+		default:
+			return nil
+		}
+	}
+
+	// 重置文件指针
+	f.Seek(0, 0)
+
+	// 解码图像
+	img, err := readImage(f, ft)
+	if err != nil {
+		return nil
+	}
+
+	// 获取图像尺寸
+	bounds := img.Bounds()
+	width := bounds.Dx()
+	height := bounds.Dy()
+
+	// 转换像素数据
+	buf := []byte{}
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			cl := img.At(x, y)
+			r, g, b, a := color.RGBAModel.Convert(cl).RGBA()
+			buf = append(buf, byte(r&0xff), byte(g&0xff), byte(b&0xff), byte(a&0xff))
+		}
+	}
+
+	// 创建纹理对象
+	texture := &mst.Texture{
+		Id:         int32(hashString(path)),
+		Name:       filepath.Base(path),
+		Size:       [2]uint64{uint64(width), uint64(height)},
+		Format:     mst.TEXTURE_FORMAT_RGBA,
+		Type:       mst.TEXTURE_PIXEL_TYPE_UBYTE,
+		Compressed: mst.TEXTURE_COMPRESSED_ZLIB,
+		Data:       mst.CompressImage(buf),
+	}
+
+	return texture
+}
+
+// readImage 读取不同格式的图像文件
+func readImage(rd io.Reader, ft string) (image.Image, error) {
+	switch ft {
+	case "jpeg", "jpg":
+		return jpeg.Decode(rd)
+	case "png":
+		return png.Decode(rd)
+	case "gif":
+		return gif.Decode(rd)
+	case "bmp":
+		return bmp.Decode(rd)
+	case "tiff", "tif":
+		return tiff.Decode(rd)
+	default:
+		return nil, errors.New("unsupported image format")
+	}
+}
+
+// hashString 生成字符串的哈希值用于纹理ID
+func hashString(s string) int32 {
+	h := fnv.New32a()
+	h.Write([]byte(s))
+	return int32(h.Sum32())
 }
 
 // convertMesh 转换assimp网格到mst网格节点
@@ -267,12 +411,6 @@ func convertMesh(aiMesh *Mesh) *mst.MeshNode {
 		if len(faceGroup.Faces) > 0 {
 			node.FaceGroup = []*mst.MeshTriangle{faceGroup}
 		}
-	}
-
-	// 转换骨骼权重（简化版本）
-	if len(aiMesh.Bones) > 0 {
-		// 这里可以实现骨骼转换逻辑
-		// 暂时跳过，但预留了结构
 	}
 
 	return node
