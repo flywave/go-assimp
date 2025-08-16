@@ -136,21 +136,3 @@ func GetImporterInfo(extension string) *ImporterDesc {
 		FileExtensions: C.GoString(cDesc.mFileExtensions),
 	}
 }
-
-// PrintSupportedFormats prints all supported formats to stdout for debugging purposes.
-func PrintSupportedFormats() {
-	count := GetSupportedImporterCount()
-	println("Assimp supports the following formats:")
-	println("====================================")
-
-	for i := 0; i < count; i++ {
-		desc := GetImportFormatDescription(i)
-		if desc != nil {
-			println("Importer:", desc.Name)
-			println("  Extensions:", desc.FileExtensions)
-			println("  Author:", desc.Author)
-			println("  Comments:", desc.Comments)
-			println()
-		}
-	}
-}
