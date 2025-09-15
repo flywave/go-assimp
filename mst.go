@@ -433,7 +433,7 @@ func processNodeHierarchy(node *Node, scene *Scene, mesh *mst.Mesh) {
 				Transfors: []*mat4d.T{transform},
 				Mesh:      &mst.BaseMesh{Nodes: []*mst.MeshNode{mesh.Nodes[meshIndex]}},
 			}
-			mesh.InstanceNode = append(mesh.InstanceNode, instance)
+			mesh.Instances = append(mesh.Instances, instance)
 		}
 	}
 

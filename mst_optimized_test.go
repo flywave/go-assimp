@@ -144,8 +144,8 @@ func TestAssimpToMSTConverterOptimized(t *testing.T) {
 		}
 
 		result := AssimpToMSTConverter(scene)
-		if len(result.InstanceNode) < 2 {
-			t.Errorf("Expected at least 2 instance nodes, got %d", len(result.InstanceNode))
+		if len(result.Instances) < 2 {
+			t.Errorf("Expected at least 2 instance nodes, got %d", len(result.Instances))
 		}
 	})
 
