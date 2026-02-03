@@ -892,7 +892,7 @@ struct IntSharedData_MDL7 {
     }
 
     //! Specifies which materials are used
-    std::vector<bool> abNeedMaterials;
+    std::vector<char> abNeedMaterials;
 
     //! List of all materials
     std::vector<aiMaterial*> pcMats;
