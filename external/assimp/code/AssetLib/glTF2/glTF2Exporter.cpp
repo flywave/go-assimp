@@ -685,7 +685,7 @@ bool glTF2Exporter::GetMatSheen(const aiMaterial &mat, glTF2::MaterialSheen &she
         return false;
 
     // Default Sheen color factor {0,0,0} disables Sheen, so do not export
-    if (sheen.sheenColorFactor == defaultSheenFactor)
+    if (std::memcmp(sheen.sheenColorFactor, defaultSheenFactor, sizeof(glTFCommon::vec3)) == 0)
         return false;
 
     mat.Get(AI_MATKEY_SHEEN_ROUGHNESS_FACTOR, sheen.sheenRoughnessFactor);

@@ -253,10 +253,10 @@ void SMDImporter::CreateOutputMeshes() {
             iFace =  asTriangles.begin();
             iFace != asTriangles.end();++iFace,++iNum) {
         if (UINT_MAX == (*iFace).iTexture) {
-            aaiFaces[(*iFace).iTexture].push_back( 0 );
+            aaiFaces[0].push_back(iNum);
         } else if ((*iFace).iTexture >= aszTextures.size()) {
             ASSIMP_LOG_INFO("[SMD/VTA] Material index overflow in face");
-            aaiFaces[(*iFace).iTexture].push_back((unsigned int)aszTextures.size()-1);
+            aaiFaces[(unsigned int)aszTextures.size()-1].push_back(iNum);
         } else {
             aaiFaces[(*iFace).iTexture].push_back(iNum);
         }

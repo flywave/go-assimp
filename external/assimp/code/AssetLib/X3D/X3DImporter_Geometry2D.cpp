@@ -274,10 +274,12 @@ void X3DImporter::readDisk2D(XmlNode &node) {
             }
 
             // add last quad
-            vlist.push_back(*tlist_i.end()); // 1st point
-            vlist.push_back(*tlist_o.end()); // 2nd point
-            vlist.push_back(*tlist_o.begin()); // 3rd point
-            vlist.push_back(*tlist_o.begin()); // 4th point
+            if (!tlist_i.empty() && !tlist_o.empty()) {
+                vlist.push_back(*tlist_i.rbegin()); // 1st point
+                vlist.push_back(*tlist_o.rbegin()); // 2nd point
+                vlist.push_back(*tlist_o.begin()); // 3rd point
+                vlist.push_back(*tlist_o.begin()); // 4th point
+            }
 
             ((X3DNodeElementGeometry2D *)ne)->NumIndices = 4;
         }
